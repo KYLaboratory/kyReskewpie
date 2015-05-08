@@ -64,7 +64,7 @@ void sensorLoop()
   delta_z = getDifference(z, init_z);
   
   if(delta_norm > thresh){
-    notifyEffect();
+    notifyEffect(delta_norm);
   }
 
   Serial.print(delta_x);
@@ -77,10 +77,10 @@ void sensorLoop()
   Serial.print("\n");
 }
 
-void notifyEffect()
+void notifyEffect(unsigned long rv_parameter)
 {
-  unsigned int effect_parameter = delta_norm/10;
-  Serial.print(effect_parameter);
+  unsigned int parameter = rv_parameter/10;
+  Serial.print(parameter);
   Serial.print('\n');
 }
 
