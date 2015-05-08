@@ -8,7 +8,7 @@ unsigned long init_norm = 0;
 #define ANALOG_PIN_Y 4
 #define ANALOG_PIN_Z 5
 #define EFFECT_START_SIGNAL 1
-#define EFFECT_STOP_SIGNAL 2
+#define EFFECT_STOP_SIGNAL 1
 #define DELAY_TIME 50
 
 void setup() {
