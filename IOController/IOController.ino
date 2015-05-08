@@ -27,7 +27,7 @@ void initializeSensor()
   Serial.print("delta_x\t");
   Serial.print("delta_y\t");
   Serial.print("delta_z\t");
-  Serial.print("delta_norm");
+  Serial.print("delta_norm\n");
 }
 
 void initializeActuator()
@@ -52,7 +52,7 @@ void sensorLoop()
   unsigned long delta_x = 0;
   unsigned long delta_y = 0;
   unsigned long delta_z = 0;
-  const unsigned long thresh = 20;
+  const unsigned long thresh = 300;
   
   x = analogRead(ANALOG_PIN_X);
   y = analogRead(ANALOG_PIN_Y);
@@ -63,25 +63,24 @@ void sensorLoop()
   delta_y = getDifference(y, init_y);
   delta_z = getDifference(z, init_z);
   
-  if(delta_norm > thresh){
-    notifyEffect(delta_norm);
+  if(delta_x > thresh){
+    notifyEffect(delta_x, delta_y, delta_z, delta_norm);
   }
-
-  Serial.print(delta_x);
-  Serial.print("\t");
-  Serial.print(delta_y);
-  Serial.print("\t");
-  Serial.print(delta_z);  
-  Serial.print("\t");
-  Serial.print(delta_norm);
-  Serial.print("\n");
 }
 
-void notifyEffect(unsigned long rv_parameter)
+void notifyEffect(unsigned long rv_x, unsigned long rv_y, unsigned long rv_z, unsigned long rv_norm)
 {
-  unsigned int parameter = rv_parameter/10;
-  Serial.print(parameter);
-  Serial.print('\n');
+  //unsigned int parameter = rv_parameter/10;
+  //Serial.print(parameter);
+  //Serial.print('\n');
+  Serial.print(rv_x);
+  Serial.print("\t");
+  Serial.print(rv_y);
+  Serial.print("\t");
+  Serial.print(rv_z);  
+  Serial.print("\t");
+  Serial.print(rv_norm);
+  Serial.print("\n");
 }
 
 unsigned long getDifference(unsigned long rv_a, unsigned long rv_b)
