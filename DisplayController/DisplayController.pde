@@ -1,6 +1,7 @@
 import processing.serial.*; 
 
 Serial port;
+// todo: change me
 static final String SERIAL_PORT_NAME = "/dev/cu.usbmodemfd111";
 static final int EFFECT_START_SIGNAL = 1;
 static final int EFFECT_STOP_SIGNAL = 2;
@@ -31,7 +32,8 @@ void setup()
   xpos = X_STARTING_POSITION;
   ypos = height / 2;
   
-  port = new Serial(this, SERIAL_PORT_NAME, SPEED);
+  // todo: temporary comment out
+  //port = new Serial(this, SERIAL_PORT_NAME, SPEED);
 }
 
 void draw() 
@@ -48,7 +50,7 @@ void draw()
     //xdirection *= -1;
     readValue = 0;
     xspeed = 0;
-    port.write(EFFECT_STOP_SIGNAL);
+    //port.write(EFFECT_STOP_SIGNAL);
     xpos = X_STARTING_POSITION;
   }
   if (ypos > height - RAD || ypos < RAD) {
@@ -63,6 +65,12 @@ void draw()
   }
 }
 
+// todo: Tempprary code
+void mousePressed() {
+  readValue = EFFECT_START_SIGNAL;
+}
+
+// todo: change me
 void serialEvent(Serial p){
   readValue = p.read();
   println("read:" + readValue);
