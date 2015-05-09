@@ -2,22 +2,17 @@ import processing.serial.*;
 
 Serial port;
 static final String SERIAL_PORT_NAME = Serial.list()[2];
-static final int EFFECT_START_SIGNAL = 1;
 static final int EFFECT_STOP_SIGNAL = 1;
 static final int SPEED = 9600;
-int readValue = 0;
-
 static final int WINDOW_WIDTH = 1350;
 static final int WINDOW_HEIGHT = 700;
 static final int BACKGROUND_COLOR = 0;
 
 final int MAX_PARTICLE = 30;
-Particle[] p = new Particle[MAX_PARTICLE];
- 
+Particle[] particles = new Particle[MAX_PARTICLE];
 final int LIGHT_FORCE_RATIO = 10;
 final int LIGHT_DISTANCE= 75 * 75;
 final int BORDER = 75;
- 
 float baseRed, baseGreen, baseBlue;
 float baseRedAdd, baseGreenAdd, baseBlueAdd;
 final float RED_ADD = 100.2;
@@ -25,13 +20,24 @@ final float GREEN_ADD = 150.7;
 final float BLUE_ADD = 202.3;
 
 float xpos, ypos;
-int inEffect = 0;
+int readValue;
+static final int MAX_READ_VALUE = 100;
+int effectNumber;
+boolean sentEffectStopSignal;
+
+static final int ERROR_READ_VALUE = -1;
  
 void setup() {
   size(WINDOW_WIDTH, WINDOW_HEIGHT);
   background(BACKGROUND_COLOR);
   noFill();
   
+  for (int i = 0; i < MAX_PARTICLE; i++) {
+    particles[i] = new Particle();
+  }
+  readValue = 0;
+  effectNumber = 0;
+  sentEffectStopSignal = false;
   xpos = 80;
   ypos = height / 2;
   
@@ -43,17 +49,17 @@ void setup() {
 }
  
 void draw() {
-  if (inEffect == 1) {
+  if (effectNumber == 1) {
+    println(sentEffectStopSignal);
     fill(0, 0, 0, 20);
     rect(0, 0, width, height);
     
     xpos += 30;
     
     colorOutCheck();
-    windowOutCheck();
     
     for (int pid = 0; pid < MAX_PARTICLE; pid++) {
-      p[pid].move(xpos, ypos);
+      particles[pid].move(xpos, ypos);
     }
     
     int tRed = (int)baseRed;
@@ -67,10 +73,10 @@ void draw() {
     loadPixels();
     for (int pid = 0; pid < MAX_PARTICLE; pid++) {
       
-      int left = max(0, p[pid].x - BORDER);
-      int right = min(width, p[pid].x + BORDER);
-      int top = max(0, p[pid].y - BORDER);
-      int bottom = min(height, p[pid].y + BORDER);
+      int left = max(0, particles[pid].x - BORDER);
+      int right = min(width, particles[pid].x + BORDER);
+      int top = max(0, particles[pid].y - BORDER);
+      int bottom = min(height, particles[pid].y + BORDER);
       
       for (int y = top; y < bottom; y++) {
         for (int x = left; x < right; x++) {
@@ -80,8 +86,8 @@ void draw() {
           int g = pixels[pixelIndex] >> 8 & 0xFF;
           int b = pixels[pixelIndex] & 0xFF;
           
-          int dx = x - p[pid].x;
-          int dy = y - p[pid].y;
+          int dx = x - particles[pid].x;
+          int dy = y - particles[pid].y;
           int distance = (dx * dx) + (dy * dy);
           
           if (distance < LIGHT_DISTANCE) {
@@ -100,17 +106,11 @@ void draw() {
     }
     updatePixels();
   }
-}
-
-void mousePressed() {
-  for (int i = 0; i < MAX_PARTICLE; i++) {
-    p[i] = new Particle();
+  
+  if (!sentEffectStopSignal && particleWindowOutCheck()) {
+    port.write(EFFECT_STOP_SIGNAL);
+    sentEffectStopSignal = true;
   }
-  inEffect = 1;
-  xpos = 80;
-  ypos = height / 2;
-  background(BACKGROUND_COLOR);
-  noFill();
 }
 
 void colorOutCheck() {
@@ -142,18 +142,52 @@ void colorOutCheck() {
   }
 }
 
-void windowOutCheck() {
+boolean particleWindowOutCheck() {
   for (int i = 0; i < MAX_PARTICLE; i++) {
-    if (p[i].isOffScreen()) {
-      port.write(EFFECT_STOP_SIGNAL);
+    if (particles[i].isOffScreen()) {
+      return true;
     }
+  }
+  return false;
+}
+
+void serialEvent(Serial port) {
+  readValue = port.read();
+  println("read:" + readValue);
+  
+  for (int i = 0; i < MAX_PARTICLE; i++) {
+    particles[i] = new Particle();
+  }
+  sentEffectStopSignal = false;
+  effectNumber = decideEffectNumberFrom(readValue);
+  xpos = 80;
+  ypos = height / 2;
+  background(BACKGROUND_COLOR);
+  noFill();
+}
+
+int decideEffectNumberFrom(int readValue) {
+  if (readValue < 0 || readValue > MAX_READ_VALUE) {
+    return ERROR_READ_VALUE;
+  }
+  
+  if (readValue < (MAX_READ_VALUE / 2)) {
+    return 1;
+  } else {
+    return 2;
   }
 }
 
-// todo: change me
-void serialEvent(Serial p){
-  readValue = p.read();
-  println("read:" + readValue);
+void mousePressed() {
+  for (int i = 0; i < MAX_PARTICLE; i++) {
+    particles[i] = new Particle();
+  }
+  sentEffectStopSignal = false;
+  effectNumber = 1;
+  xpos = 80;
+  ypos = height / 2;
+  background(BACKGROUND_COLOR);
+  noFill();
 }
 
 class Particle {
