@@ -15,7 +15,7 @@
 #define ANALOG_PIN_Y2 7
 #define ANALOG_PIN_Z2 8
 
-#define EFFECT_START_SIGNAL 1
+//#define EFFECT_START_SIGNAL 1
 #define EFFECT_STOP_SIGNAL 1
 
 #define DELAY_TIME 50
@@ -49,7 +49,7 @@ bool is_notify = true;  //notifyEffect() and actuatorLoop()
 //actuation
 int LEDbarValue = 3;//LED bar value
 int solenoidState = HIGH;//solenoid
-int HP; //hit point 
+int HP = 10; //hit point 
 
 Grove_LED_Bar bar(9, 8, 0);  // Clock pin, Data pin, Orientation
 ChainableLED leds(6, 7, NUM_LEDS);
@@ -138,12 +138,15 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
     if(is_notify){
       sprintf(data, "d,%d", param1.x * 100 / parameter_max);
       Serial.println(data);
+      if(HP > 0)HP--;
+      if(HP > 0)HP--;
       is_notify = false;
     }
   }
   else if(arms == ARMS_SINGLE)
   {
     if(is_notify){
+      if(HP > 0)HP--;
       if(param1.x < param2.x){ 
         sprintf(data, "s,%d", param2.x * 100 / parameter_max);
       }
@@ -156,16 +159,6 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
   }
   else
   {
-    const unsigned int wait_thresh = 100;
-    static unsigned int wait_count = 0;
-    if(wait_count == wait_thresh){
-      is_notify = true;
-      wait_count = 0;
-    }
-    else{
-      if(!is_notify)wait_count++;
-    }
-    
   }
   
 }
@@ -203,17 +196,18 @@ void actuatorLoop()// LEDbarのみの記述
 
 
 void serialEvent() {  
-  const int DELAY_TIME_LEDbar=300;  //micro second
-  const int DELAY_TIME_VIBRATOR=300;  //micro second
+  const int DELAY_TIME_LEDbar=300;  //ms
+  const int DELAY_TIME_VIBRATOR=300;  //ms
   if (Serial.read() == EFFECT_STOP_SIGNAL) {
+    is_notify = true;
     if(HP<=0){  // finish game
       digitalWrite(OUTPUT_SOLENOID, HIGH);
       LEDbarValue = 0;
       bar.setLevel(LEDbarValue);
       delay(DELAY_TIME_LEDbar);
-      digitalWrite(OUTPUT_SOLENOID, LOW); //
+      digitalWrite(OUTPUT_SOLENOID, LOW);
       leds.setColorRGB(0, 0, 0, 0); //RGB LED OFF
-      effectLED();
+      //effectLED();
     }else if(HP>0){  //vibration 
       digitalWrite(OUTPUT_VIBRATOR, HIGH);
       delay(DELAY_TIME_VIBRATOR);
