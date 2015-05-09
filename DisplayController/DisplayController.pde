@@ -1,4 +1,5 @@
 import processing.serial.*;
+import ddf.minim.*;
 
 Serial port;
 static final String SERIAL_PORT_NAME = Serial.list()[2];
@@ -39,6 +40,12 @@ static final int NEON_STRONG = 4;
 
 static final int ERROR_READ_VALUE = -1;
 static final int ERROR_READ_COMMAND = -2;
+
+Minim minim;
+AudioSample fx1;
+AudioSample fx2;
+AudioSample fx_damage;
+AudioSample fx_exp;
  
 void setup() {
   size(WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -59,6 +66,13 @@ void setup() {
   if (connectsArduino()) {
     port = new Serial(this, SERIAL_PORT_NAME, SPEED);
   }
+  
+  // audio setup
+  minim = new Minim(this);
+  fx1 = minim.loadSample("fx_single.mp3");
+  fx2 = minim.loadSample("fx_double.mp3");
+  fx_damage = minim.loadSample("fx_damage.mp3");
+  fx_exp = minim.loadSample("fx_exp.mp3");
 }
 
 void initializeDisplay() {
@@ -202,11 +216,28 @@ void draw() {
       port.write(EFFECT_STOP_SIGNAL);
     }
     sentEffectStopSignal = true;
+    fx_damage.trigger();
   }
 }
 
 void playSE() {
-  
+  switch(effectNumber)
+  {
+    case 1:
+      fx1.trigger();
+      break;
+    case 2:
+      fx2.trigger();
+      break;
+    case 3:
+      fx1.trigger();
+      break;
+    case 4:
+      fx1.trigger();
+      break;
+    default:
+      break;
+  }
 }
 
 void colorOutCheck() {
