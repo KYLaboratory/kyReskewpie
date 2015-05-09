@@ -437,7 +437,7 @@ class NeonLine {
       float wide = size2 - abs(j - y);
       for(int i = max(0, (int)(x - wide)); i < min(width - 1, (int)(x + wide)); i++){
         int id = j * width + i;
-        px[id] = blendColor(px[id], col, ADD);
+        px[id] = col;
       }
     }
   }
