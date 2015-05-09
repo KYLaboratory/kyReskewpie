@@ -69,10 +69,10 @@ void setup() {
   
   // audio setup
   minim = new Minim(this);
-  fx1 = minim.loadSample("fx_single.mp3");
-  fx2 = minim.loadSample("fx_double.mp3");
-  fx_damage = minim.loadSample("fx_damage.mp3");
-  fx_exp = minim.loadSample("fx_exp.mp3");
+  fx1 = minim.loadSample("fx_single.wav");
+  fx2 = minim.loadSample("fx_double.wav");
+  fx_damage = minim.loadSample("fx_damage.wav");
+  fx_exp = minim.loadSample("fx_exp.wav");
 }
 
 void initializeDisplay() {
