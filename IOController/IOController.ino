@@ -14,6 +14,12 @@
 
 #define DELAY_TIME 50
 
+enum ARMS_STATUS{
+  ARMS_NONE,
+  ARMS_SINGLE,
+  ARMS_DOUBLE
+};
+
 struct vector3D
 {
   unsigned long x;
@@ -21,6 +27,8 @@ struct vector3D
   unsigned long z;
   unsigned long norm;
 };
+
+ARMS_STATUS judgeArmsStatus(const struct vector3D& param1, const struct vector3D& param2);
 
 struct vector3D initParam1 = {0, 0, 0, 0};
 struct vector3D initParam2 = {0, 0, 0, 0};
@@ -63,17 +71,33 @@ void loop() {
 
 void sensorLoop()
 {
-  const unsigned long thresh = 300;
-  
   const struct vector3D currentParam1 = createVector3D(analogRead(ANALOG_PIN_X1), analogRead(ANALOG_PIN_Y1), analogRead(ANALOG_PIN_Z1));
   const struct vector3D deltaParam1 = calcDiffVector3D(currentParam1, initParam1);
   
   const struct vector3D currentParam2 = createVector3D(analogRead(ANALOG_PIN_X2), analogRead(ANALOG_PIN_Y2), analogRead(ANALOG_PIN_Z2));
   const struct vector3D deltaParam2 = calcDiffVector3D(currentParam2, initParam2);
   
-  if(deltaParam2.x > thresh){
-    notifyEffect(deltaParam2);
+  switch(judgeArmsStatus(deltaParam1, deltaParam2))
+  {
+    case ARMS_SINGLE:
+      notifyEffect(deltaParam1);
+      break;
+    default:
+      break;
   }
+  
+}
+
+ARMS_STATUS judgeArmsStatus(const struct vector3D& param1, const struct vector3D& param2)
+{
+  const unsigned long thresh = 300;
+  
+  if(param1.x > thresh)
+  {
+    return ARMS_SINGLE;
+  }
+  
+  return ARMS_NONE;
 }
 
 struct vector3D calcDiffVector3D(const struct vector3D& currentParam, const struct vector3D& initParam)
