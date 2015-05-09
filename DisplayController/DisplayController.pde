@@ -20,17 +20,20 @@ final float GREEN_ADD = 150.7;
 final float BLUE_ADD = 202.3;
 
 float xpos, ypos;
+String readCommand;
 int readValue;
 static final int MAX_READ_VALUE = 100;
 int effectNumber;
 boolean sentEffectStopSignal;
 
 static final int ERROR_READ_VALUE = -1;
+static final int ERROR_READ_COMMAND = -2;
  
 void setup() {
   size(WINDOW_WIDTH, WINDOW_HEIGHT);
   initializeDisplay();
   
+  readCommand = "";
   readValue = 0;
   effectNumber = 0;
   
@@ -190,22 +193,30 @@ boolean particleWindowOutCheck() {
 }
 
 void serialEvent(Serial port) {
-  readValue = port.read();
-  println("read:" + readValue);
+  String inBuffer = port.readString();
+  if (inBuffer != null) {
+    String[] inBuffers = inBuffer.split(",", 0);
+    readCommand = inBuffers[0];
+    readValue = Integer.parseInt(inBuffers[1]);
+    println("command:" + readCommand);
+    println("read:" + readValue);
+  }
   
   initializeDisplay();
-  effectNumber = decideEffectNumberFrom(readValue);
+  effectNumber = decideEffectNumberFrom(readCommand, readValue);
 }
 
-int decideEffectNumberFrom(int readValue) {
+int decideEffectNumberFrom(String readCommand, int readValue) {
   if (readValue < 0 || readValue > MAX_READ_VALUE) {
     return ERROR_READ_VALUE;
   }
   
-  if (readValue < (MAX_READ_VALUE / 2)) {
+  if (readCommand.equals("s")) {
     return 1;
-  } else {
+  } else if (readCommand.equals("d")) {
     return 2;
+  } else {
+    return ERROR_READ_COMMAND;
   }
 }
 
