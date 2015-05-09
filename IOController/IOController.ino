@@ -1,15 +1,24 @@
-unsigned long init_x = 0;
-unsigned long init_y = 0;
-unsigned long init_z = 0;
-unsigned long init_norm = 0;
 #define OUTPUT_LED 12
 #define SPEED 9600
-#define ANALOG_PIN_X 3
-#define ANALOG_PIN_Y 4
-#define ANALOG_PIN_Z 5
+
+#define ANALOG_PIN_X1 3
+#define ANALOG_PIN_Y1 4
+#define ANALOG_PIN_Z1 5
+
 #define EFFECT_START_SIGNAL 1
 #define EFFECT_STOP_SIGNAL 1
+
 #define DELAY_TIME 50
+
+struct vector3D
+{
+  unsigned long x;
+  unsigned long y;
+  unsigned long z;
+  unsigned long norm;
+};
+
+struct vector3D initParam1 = {0, 0, 0, 0};
 
 void setup() {
   // put your setup code here, to run once:
@@ -18,12 +27,16 @@ void setup() {
   initializeActuator();
 }
 
-void initializeSensor()
+struct vector3D createVector3D(unsigned long x, unsigned long y, unsigned long z)
 {
-  init_x = analogRead(ANALOG_PIN_X);
-  init_y = analogRead(ANALOG_PIN_Y);
-  init_z = analogRead(ANALOG_PIN_Z);
-  init_norm = sqrt(init_x * init_x + init_y * init_y + init_z * init_z);
+  struct vector3D newAccParam = {x, y, z, sqrt(x * x + y * y + z * z)};
+  return newAccParam;
+}
+
+void initializeSensor()
+{  
+  initParam1 = createVector3D(analogRead(ANALOG_PIN_X1), analogRead(ANALOG_PIN_Y1), analogRead(ANALOG_PIN_Z1));
+  
   Serial.print("delta_x\t");
   Serial.print("delta_y\t");
   Serial.print("delta_z\t");
@@ -44,42 +57,37 @@ void loop() {
 
 void sensorLoop()
 {
-  unsigned long x = 0;
-  unsigned long y = 0;
-  unsigned long z = 0;
-  unsigned long norm = 0;
-  unsigned long delta_norm = 0;
-  unsigned long delta_x = 0;
-  unsigned long delta_y = 0;
-  unsigned long delta_z = 0;
   const unsigned long thresh = 300;
   
-  x = analogRead(ANALOG_PIN_X);
-  y = analogRead(ANALOG_PIN_Y);
-  z = analogRead(ANALOG_PIN_Z);
-  norm = sqrt(x*x + y*y + z*z);
-  delta_norm = getDifference(norm, init_norm);
-  delta_x = getDifference(x, init_x);
-  delta_y = getDifference(y, init_y);
-  delta_z = getDifference(z, init_z);
+  const struct vector3D currentParam = createVector3D(analogRead(ANALOG_PIN_X1), analogRead(ANALOG_PIN_Y1), analogRead(ANALOG_PIN_Z1));
+  const struct vector3D deltaParam = calcDiffVector3D(currentParam, initParam1);
   
-  if(delta_x > thresh){
-    notifyEffect(delta_x, delta_y, delta_z, delta_norm);
+  if(deltaParam.x > thresh){
+    notifyEffect(deltaParam);
   }
 }
 
-void notifyEffect(unsigned long rv_x, unsigned long rv_y, unsigned long rv_z, unsigned long rv_norm)
+struct vector3D calcDiffVector3D(const struct vector3D& currentParam, const struct vector3D& initParam)
+{
+  struct vector3D deltaAccParam = createVector3D(
+    getDifference(currentParam.x, initParam.x), 
+    getDifference(currentParam.y, initParam.y),
+    getDifference(currentParam.z, initParam.z));
+  return deltaAccParam;
+}
+
+void notifyEffect(const struct vector3D& param)
 {
   //unsigned int parameter = rv_parameter/10;
   //Serial.print(parameter);
   //Serial.print('\n');
-  Serial.print(rv_x);
+  Serial.print(param.x);
   Serial.print("\t");
-  Serial.print(rv_y);
+  Serial.print(param.y);
   Serial.print("\t");
-  Serial.print(rv_z);  
+  Serial.print(param.z);  
   Serial.print("\t");
-  Serial.print(rv_norm);
+  Serial.print(param.norm);
   Serial.print("\n");
 }
 
