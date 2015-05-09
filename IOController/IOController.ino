@@ -5,6 +5,10 @@
 #define ANALOG_PIN_Y1 4
 #define ANALOG_PIN_Z1 5
 
+#define ANALOG_PIN_X2 6
+#define ANALOG_PIN_Y2 7
+#define ANALOG_PIN_Z2 8
+
 #define EFFECT_START_SIGNAL 1
 #define EFFECT_STOP_SIGNAL 1
 
@@ -19,6 +23,7 @@ struct vector3D
 };
 
 struct vector3D initParam1 = {0, 0, 0, 0};
+struct vector3D initParam2 = {0, 0, 0, 0};
 
 void setup() {
   // put your setup code here, to run once:
@@ -36,6 +41,7 @@ struct vector3D createVector3D(unsigned long x, unsigned long y, unsigned long z
 void initializeSensor()
 {  
   initParam1 = createVector3D(analogRead(ANALOG_PIN_X1), analogRead(ANALOG_PIN_Y1), analogRead(ANALOG_PIN_Z1));
+  initParam2 = createVector3D(analogRead(ANALOG_PIN_X2), analogRead(ANALOG_PIN_Y2), analogRead(ANALOG_PIN_Z2));
   
   Serial.print("delta_x\t");
   Serial.print("delta_y\t");
@@ -59,11 +65,14 @@ void sensorLoop()
 {
   const unsigned long thresh = 300;
   
-  const struct vector3D currentParam = createVector3D(analogRead(ANALOG_PIN_X1), analogRead(ANALOG_PIN_Y1), analogRead(ANALOG_PIN_Z1));
-  const struct vector3D deltaParam = calcDiffVector3D(currentParam, initParam1);
+  const struct vector3D currentParam1 = createVector3D(analogRead(ANALOG_PIN_X1), analogRead(ANALOG_PIN_Y1), analogRead(ANALOG_PIN_Z1));
+  const struct vector3D deltaParam1 = calcDiffVector3D(currentParam1, initParam1);
   
-  if(deltaParam.x > thresh){
-    notifyEffect(deltaParam);
+  const struct vector3D currentParam2 = createVector3D(analogRead(ANALOG_PIN_X2), analogRead(ANALOG_PIN_Y2), analogRead(ANALOG_PIN_Z2));
+  const struct vector3D deltaParam2 = calcDiffVector3D(currentParam2, initParam2);
+  
+  if(deltaParam2.x > thresh){
+    notifyEffect(deltaParam2);
   }
 }
 
