@@ -1,8 +1,11 @@
 #include <Grove_LED_Bar.h>
+#include <Servo.h>
 
 #define OUTPUT_SOLENOID 4
 #define INPUT_BUTTON 6
 #define OUTPUT_VIBRATOR 2
+#define OUTPUT_SERVO 3
+
 
 #define OUTPUT_LED 12
 #define SPEED 9600
@@ -49,10 +52,12 @@ int HP; //hit point
 
 Grove_LED_Bar bar(9, 8, 0);  // Clock pin, Data pin, Orientation
 
+Servo myservo;  // create servo object to control a servo
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(SPEED);
+  myservo.attach(OUTPUT_SERVO);
   initializeSensor();
   initializeActuator();
 }
@@ -245,6 +250,10 @@ void serialEvent() {
       bar.setLevel(LEDbarValue);
       delay(300);
       digitalWrite(OUTPUT_SOLENOID, LOW);
+      myservo.write(180); //サーボを動かす(180度)
+      delay(2000);
+      myservo.write(0);
+      
       effectLED();
     }else if(HP>0){
       digitalWrite(OUTPUT_VIBRATOR, HIGH);
