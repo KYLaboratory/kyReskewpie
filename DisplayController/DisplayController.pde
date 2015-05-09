@@ -26,6 +26,12 @@ static final int MAX_READ_VALUE = 100;
 int effectNumber;
 boolean sentEffectStopSignal;
 
+float halfWidth, halfHeight;
+final int MAX_LINE = 30;
+NeonLine[] neonLine = new NeonLine[MAX_LINE];
+final int DRAW_TIMES = 10;
+final int BORDER_DEAD_COUNT = 8;
+
 static final int ERROR_READ_VALUE = -1;
 static final int ERROR_READ_COMMAND = -2;
  
@@ -36,6 +42,12 @@ void setup() {
   readCommand = "";
   readValue = 0;
   effectNumber = 0;
+  halfWidth = width / 2;
+  halfHeight = height / 2;
+  
+  for(int i = 0; i < MAX_LINE; i++){
+    neonLine[i] = new NeonLine();
+  }
   
   if (connectsArduino()) {
     port = new Serial(this, SERIAL_PORT_NAME, SPEED);
@@ -82,6 +94,7 @@ void draw() {
     for (int pid = 0; pid < MAX_PARTICLE; pid++) {
       particles[pid].move(xpos, ypos);
     }
+    applyAdditiveSynthesis();
   } else if (effectNumber == 2) {
     fill(0, 0, 0, 15);
     rect(0, 0, width, height);
@@ -96,9 +109,41 @@ void draw() {
       particles[pid].move(xpos, ypos);
       particles[pid].explode();
     }
+    applyAdditiveSynthesis();
+  } else if (effectNumber == 3) {
+    fill(0, 0, 0, 10);
+    rect(0, 0, width, height);
+   
+    int deadCounter = 0;
+    loadPixels();
+    
+    for(int j = 0; j < MAX_LINE;j++){
+      if(neonLine[j].live) {
+        for(int i = 0; i < DRAW_TIMES; i++){
+          neonLine[j].draw(pixels);
+        }
+      } else {
+        deadCounter++;
+      }
+    }
+    updatePixels();
+    
+    if(deadCounter >= BORDER_DEAD_COUNT){
+      float x = 0,y = 0;
+      if(random(1) > 0.5) {
+        x = int(random(2)) * width;
+        y = random(height);
+      } else {
+        x = random(width);
+        y = int(random(2)) * height;
+      }
+      for(int i = 0; i < MAX_LINE; i++){
+        if(!neonLine[i].live){
+          neonLine[i].revival(x, y);
+        }
+      }
+    }
   }
-  
-  applyAdditiveSynthesis();
   
   if (!sentEffectStopSignal && particleWindowOutCheck()) {
     if (connectsArduino()) {
@@ -192,10 +237,10 @@ boolean particleWindowOutCheck() {
   return false;
 }
 
-void serialEvent(Serial port) {
-  String inBuffer = port.readStringUntil('\n');
+void serialEvent(Serial serialPort) {
+  String inBuffer = serialPort.readStringUntil('\n');
   if (inBuffer != null) {
-    String[] inBuffers = inBuffer.split(",", 0);
+    String[] inBuffers = inBuffer.split("[,\\n]", 0);
     readCommand = inBuffers[0];
     readValue = Integer.parseInt(inBuffers[1]);
     println("command:" + readCommand);
@@ -232,6 +277,9 @@ void keyPressed() {
   } else if (key == '2') {
     initializeDisplay();
     effectNumber = 2;
+  }  else if (key == '3') {
+    initializeDisplay();
+    effectNumber = 3;
   }
 }
 
@@ -264,5 +312,96 @@ class Particle {
   
   boolean isOffScreen() {
     return (x > width);
+  }
+}
+
+class NeonLine {
+  float x;
+  float y;
+  float speed;
+  float direction;
+  float addDirection;
+  float accelDirection;
+  float addlDirectionRange;
+  float stateCounter;
+  color col;
+  boolean live = false;
+ 
+  final int BORDER_STATE_COUNTER = 150;
+ 
+  NeonLine(){
+    switch((int)random(6)){
+    case 0:
+      col = color(255, 255, 128, 25);
+      break;
+    case 1:
+      col = color(255, 128, 255, 25);
+      break;
+    case 2:
+      col = color(128, 255, 255, 25);
+      break;
+    case 3:
+      col = color(255, 128, 128, 25);
+      break;
+    case 4:
+      col = color(128, 255, 128, 25);
+      break;
+    case 5:
+      col = color(128, 128, 255, 25);
+      break;
+    }
+  }
+ 
+  void revival(float _x, float _y){
+    x = _x;
+    y = _y;
+    speed = 1 + random(0.5);
+    direction = degrees(atan2(halfHeight - y, halfWidth - x));
+    addDirection = 0;
+    accelDirection = 0;
+    addlDirectionRange = random(6);
+    stateCounter = -random(200);
+    live = true;
+  }
+ 
+  void draw(int[] pixels){
+    if(live){
+      x += cos(radians(direction)) * speed;
+      y += sin(radians(direction)) * speed;
+      direction += addDirection;
+      addDirection += accelDirection;
+      
+      stateCounter++;
+      if(stateCounter >= BORDER_STATE_COUNTER) {
+        stateCounter = 0;
+        addDirection = random(addlDirectionRange) - addlDirectionRange / 2;
+      }
+      
+      boolean deadFlg = false;    
+      if(abs(x - width) >= width) {
+        live = false;
+        return;
+      }
+      if(abs(y - height) >= height) {
+        live = false;
+        return ;
+      }
+      
+      for(int i = 1; i < 4; i++){
+        neonDia(pixels, i);
+      }
+    }
+  }
+  
+  private void neonDia(int[] px, int size){
+    float size2 = size * size / 2;
+ 
+    for(int j = max(0, (int)(y - size2)); j < min(height - 1, (int)(y + size2)); j++){
+      float wide = size2 - abs(j - y);
+      for(int i = max(0, (int)(x - wide)); i < min(width - 1, (int)(x + wide)); i++){
+        int id = j * width + i;
+        px[id] = blendColor(px[id], col, ADD);
+      }
+    }
   }
 }
