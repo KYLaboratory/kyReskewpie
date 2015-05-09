@@ -18,6 +18,7 @@
 #define ANALOG_PIN_Z2 8
 
 #define EFFECT_STOP_SIGNAL 1
+#define RESET_SIGNAL 2
 
 #define DELAY_TIME 50
 #define NUM_LEDS 1
@@ -86,6 +87,7 @@ void initializeActuator()
   myservo.write(INITIAL_ANGLE);//初期角度を８０度に設定
   pinMode(OUTPUT_LED, OUTPUT);
   digitalWrite(OUTPUT_LED, HIGH);
+  HP = 10;
 }
 
 void loop() {
@@ -142,8 +144,8 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
 {  
   const unsigned int data_length = 20;
   const unsigned long parameter_max = 468;
-  const unsigned long offset_single = 200;
-  const unsigned long offset_double = 300;
+  const unsigned long offset = 200;
+
   char data[data_length] = {0};
   unsigned long effect_param = 0;
   
@@ -151,10 +153,10 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
   {
     if(is_notify){
       if(param1.x < param2.x){
-        effect_param =  ( param2.x - offset_double) * 100 / (parameter_max - offset_double);
+        effect_param =  ( param2.x - offset) * 100 / (parameter_max - offset);
       }
       else{
-        effect_param =  ( param1.x - offset_double) * 100 / (parameter_max - offset_double);
+        effect_param =  ( param1.x - offset) * 100 / (parameter_max - offset);
       }
       sprintf(data, "d,%d,", effect_param );
       Serial.println(data);
@@ -168,10 +170,10 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
     if(is_notify){
       decrementN(HP, 1);
       if(param1.x < param2.x){
-        effect_param =  (param2.x - offset_single) * 100 / (parameter_max - offset_single); 
+        effect_param =  (param2.x - offset) * 100 / (parameter_max - offset); 
       }
       else{
-        effect_param =  (param1.x - offset_single) * 100 / (parameter_max - offset_single); 
+        effect_param =  (param1.x - offset) * 100 / (parameter_max - offset); 
       }
       sprintf(data, "s,%d,",effect_param);
       Serial.println(data);
@@ -229,7 +231,8 @@ void serialEvent() {
   const int DELAY_TIME_SERVO = 3000;  //ms
   const int SERVO_MIN = 80;
   const int SERVO_MAX = 120;
-  if (Serial.read() == EFFECT_STOP_SIGNAL) {
+  int read_value = Serial.read();
+  if (read_value == EFFECT_STOP_SIGNAL) {
     is_notify = true;
     if(HP<=0){  // finish game
       digitalWrite(OUTPUT_SOLENOID, HIGH);
@@ -250,13 +253,15 @@ void serialEvent() {
         myservo.write(i);
         delay(25); 
       } //サーボを動かす(80度)
-
-      myservo.write(80); //サーボを動かす(80度)
-      
-    }else if(HP>0){  
-      //no action
+      myservo.write(80); //サーボを動かす(80度)  
     }
+    else if(HP > 0){
+    }
+  }  
+  else if(read_value == RESET_SIGNAL){  
+      initializeActuator();
   }
+  
 }
 
 void effectLED(){ // effect LEDbar in finish time
