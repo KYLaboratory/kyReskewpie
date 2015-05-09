@@ -20,6 +20,7 @@
 #define EFFECT_STOP_SIGNAL 1
 
 #define DELAY_TIME 50
+#define NUM_LEDS 1
 
 //sensor
 struct vector3D
@@ -82,7 +83,6 @@ void initializeActuator()
 {
   pinMode(OUTPUT_SOLENOID, OUTPUT);
   pinMode(OUTPUT_VIBRATOR, OUTPUT);
-  pinMode(INPUT_BUTTON, INPUT);
   leds.init();
   
 }
