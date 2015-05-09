@@ -223,6 +223,12 @@ void actuatorLoop()// LEDbarのみの記述
     
     // if(is_notify)でシングルLED光らせる　else シングルLED消灯
     // hogehoge
+    if(is_notify){
+      leds.setColorRGB(0, 0, 0, 250);
+    }else{
+      leds.setColorRGB(0, 250, 0, 0);
+    }
+    
 }
 
 
