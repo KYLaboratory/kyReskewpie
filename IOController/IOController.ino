@@ -6,7 +6,7 @@
 #define OUTPUT_VIBRATOR 2
 #define OUTPUT_SERVO 3
 
-#define OUTPUT_LED 12
+#define OUTPUT_LED 13
 #define SPEED 9600
 
 #define ANALOG_PIN_X1 3
@@ -62,9 +62,6 @@ void setup() {
   Serial.begin(SPEED);
   initializeSensor();
   initializeActuator();
-
-  pinMode(13, OUTPUT);
-  digitalWrite(13, HIGH);
 }
 
 struct vector3D createVector3D(unsigned long x, unsigned long y, unsigned long z)
@@ -85,6 +82,8 @@ void initializeActuator()
   pinMode(OUTPUT_VIBRATOR, OUTPUT);
   leds.init();
   myservo.attach(OUTPUT_SERVO);  // attaches the servo on pin 9 to the servo object
+  pinMode(OUTPUT_LED, OUTPUT);
+  digitalWrite(OUTPUT_LED, HIGH);
 }
 
 void loop() {
@@ -150,6 +149,7 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
       Serial.println(data);
       decrementN(HP, 5);
       is_notify = false;
+      vibration();
     }
   }
   else if(arms == ARMS_SINGLE)
@@ -164,10 +164,19 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
       }
       Serial.println(data);
       is_notify = false;
+      vibration();
     }
   }
   else{
   }  
+}
+
+void vibration(){
+  const int DELAY_TIME_VIBRATOR=300;  //ms
+
+  digitalWrite(OUTPUT_VIBRATOR, HIGH);
+  delay(DELAY_TIME_VIBRATOR);
+  digitalWrite(OUTPUT_VIBRATOR, LOW); 
 }
 
 void decrementN(int& rv_value, int n)
@@ -206,7 +215,6 @@ void actuatorLoop()// LEDbarのみの記述
 
 void serialEvent() {  
   const int DELAY_TIME_LEDbar=300;  //ms
-  const int DELAY_TIME_VIBRATOR=300;  //ms
   const int DELAY_TIME_SERVO=2000;  //ms
   if (Serial.read() == EFFECT_STOP_SIGNAL) {
     is_notify = true;
@@ -223,10 +231,8 @@ void serialEvent() {
       delay(DELAY_TIME_SERVO);
       myservo.write(80); //サーボを動かす(80度)
       
-    }else if(HP>0){  //vibration 
-      digitalWrite(OUTPUT_VIBRATOR, HIGH);
-      delay(DELAY_TIME_VIBRATOR);
-      digitalWrite(OUTPUT_VIBRATOR, LOW);      
+    }else if(HP>0){  
+      //no action
     }
   }
 }
@@ -252,3 +258,4 @@ void effectLED(){ // effect LEDbar in finish time
     delay(DELAY_TIME_EFFECTLED);
   }
 }
+
