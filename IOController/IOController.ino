@@ -2,7 +2,6 @@
 #include <ChainableLED.h>
 
 #define OUTPUT_SOLENOID 4
-//#define INPUT_BUTTON 6
 #define OUTPUT_VIBRATOR 2
 
 #define OUTPUT_LED 12
@@ -20,6 +19,7 @@
 #define EFFECT_STOP_SIGNAL 1
 
 #define DELAY_TIME 50
+#define NUM_LEDS 1
 
 //sensor
 struct vector3D
@@ -71,18 +71,12 @@ void initializeSensor()
 {  
   initParam1 = createVector3D(analogRead(ANALOG_PIN_X1), analogRead(ANALOG_PIN_Y1), analogRead(ANALOG_PIN_Z1));
   initParam2 = createVector3D(analogRead(ANALOG_PIN_X2), analogRead(ANALOG_PIN_Y2), analogRead(ANALOG_PIN_Z2));
-  
-  Serial.print("delta_x\t");
-  Serial.print("delta_y\t");
-  Serial.print("delta_z\t");
-  Serial.print("delta_norm\n");
 }
 
 void initializeActuator()
 {
   pinMode(OUTPUT_SOLENOID, OUTPUT);
   pinMode(OUTPUT_VIBRATOR, OUTPUT);
-  pinMode(INPUT_BUTTON, INPUT);
   leds.init();
   
 }
@@ -135,51 +129,28 @@ struct vector3D calcDiffVector3D(const struct vector3D& currentParam, const stru
 
 void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, const ARMS_STATUS arms)
 {  
-
+  const unsigned int data_length = 20;
+  const unsigned long parameter_max = 468;
+  char data[data_length] = {0};
   
   if(arms == ARMS_DOUBLE)
   {
     if(is_notify){
-      Serial.print(param1.x);
-      Serial.print("\t");
-      Serial.print(param1.y);
-      Serial.print("\t");
-      Serial.print(param1.z);  
-      Serial.print("\t");
-      Serial.print(param1.norm);
-      Serial.print("\t");
-      Serial.print(param2.x);
-      Serial.print("\t");
-      Serial.print(param2.y);
-      Serial.print("\t");
-      Serial.print(param2.z);  
-      Serial.print("\t");
-      Serial.print(param2.norm);
-      Serial.print("\t");
-      Serial.println("DOUBLE");
+      sprintf(data, "d,%d", param1.x * 100 / parameter_max);
+      Serial.println(data);
       is_notify = false;
     }
   }
   else if(arms == ARMS_SINGLE)
   {
     if(is_notify){
-      Serial.print(param1.x);
-      Serial.print("\t");
-      Serial.print(param1.y);
-      Serial.print("\t");
-      Serial.print(param1.z);  
-      Serial.print("\t");
-      Serial.print(param1.norm);
-      Serial.print("\t");
-      Serial.print(param2.x);
-      Serial.print("\t");
-      Serial.print(param2.y);
-      Serial.print("\t");
-      Serial.print(param2.z);  
-      Serial.print("\t");
-      Serial.print(param2.norm);
-      Serial.print("\t");
-      Serial.println("SINGLE");
+      if(param1.x < param2.x){ 
+        sprintf(data, "s,%d", param2.x * 100 / parameter_max);
+      }
+      else{
+        sprintf(data, "s,%d",param1.x * 100 / parameter_max);
+      }
+      Serial.println(data);
       is_notify = false;
     }
   }
@@ -188,7 +159,6 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
     const unsigned int wait_thresh = 100;
     static unsigned int wait_count = 0;
     if(wait_count == wait_thresh){
-      Serial.println("READY");
       is_notify = true;
       wait_count = 0;
     }
