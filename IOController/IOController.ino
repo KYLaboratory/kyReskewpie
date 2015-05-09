@@ -67,11 +67,13 @@ void initializeSensor()
 {  
   initParam1 = createVector3D(analogRead(ANALOG_PIN_X1), analogRead(ANALOG_PIN_Y1), analogRead(ANALOG_PIN_Z1));
   initParam2 = createVector3D(analogRead(ANALOG_PIN_X2), analogRead(ANALOG_PIN_Y2), analogRead(ANALOG_PIN_Z2));
-  
+
+  /*
   Serial.print("delta_x\t");
   Serial.print("delta_y\t");
   Serial.print("delta_z\t");
   Serial.print("delta_norm\n");
+  */
 }
 
 void initializeActuator()
@@ -131,10 +133,11 @@ struct vector3D calcDiffVector3D(const struct vector3D& currentParam, const stru
 void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, const ARMS_STATUS arms)
 {  
   static bool is_notify = true;
-  
+  const unsigned long max = 468;
   if(arms == ARMS_DOUBLE)
   {
     if(is_notify){
+      /*
       Serial.print(param1.x);
       Serial.print("\t");
       Serial.print(param1.y);
@@ -152,12 +155,17 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
       Serial.print(param2.norm);
       Serial.print("\t");
       Serial.println("DOUBLE");
+      */
+      Serial.print("d,");
+      Serial.print(param1.x * 100 / max);
+      Serial.print("\n");
       is_notify = false;
     }
   }
   else if(arms == ARMS_SINGLE)
   {
     if(is_notify){
+      /*
       Serial.print(param1.x);
       Serial.print("\t");
       Serial.print(param1.y);
@@ -175,6 +183,17 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
       Serial.print(param2.norm);
       Serial.print("\t");
       Serial.println("SINGLE");
+      */
+      if(param1.x < param2.x){
+        Serial.print("s,");
+        Serial.print(param2.x * 100 / max);
+        Serial.print("\n");
+      }
+      else {
+        Serial.print("s,");
+        Serial.print(param1.x * 100 / max);
+        Serial.print("\n");
+      }
       is_notify = false;
     }
   }
@@ -183,7 +202,7 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
     const unsigned int wait_thresh = 100;
     static unsigned int wait_count = 0;
     if(wait_count == wait_thresh){
-      Serial.println("READY");
+      //Serial.println("READY");
       is_notify = true;
       wait_count = 0;
     }
