@@ -76,7 +76,9 @@ void initializeSensor()
 void initializeActuator()
 {
   pinMode(OUTPUT_SOLENOID, OUTPUT);
+  pinMode(OUTPUT_VIBRATOR, OUTPUT);
   pinMode(INPUT_BUTTON, INPUT);
+  
 }
 
 void loop() {
@@ -203,10 +205,33 @@ void serialEvent() {
       bar.setLevel(LEDbarValue);
       delay(300);
       digitalWrite(OUTPUT_SOLENOID, LOW);
+      effectLED();
     }else if(HP>0){
       digitalWrite(OUTPUT_VIBRATOR, HIGH);
       delay(300);
       digitalWrite(OUTPUT_VIBRATOR, LOW);      
     }
+  }
+}
+
+void effectLED(){
+  int k;
+  for(k=0;k<3;k++){
+    // Turn on LEDs 1, 2, 3, 4, 5
+    // 0b000000000011111 == 0x1F
+    bar.setBits(0b000001010101010);
+    delay(700);
+  
+    // Turn on LEDs 6, 7, 8, 9, 10
+    // 0b000001111100000 == 0x3E0
+    bar.setBits(0b000000101010101);
+    delay(700);
+  }
+  int k;
+  for(k=0;k<3;k++){
+    bar.setBits(0b000001111111111);
+    delay(800);
+    bar.setBits(0b000000000000000);
+    delay(800);
   }
 }
