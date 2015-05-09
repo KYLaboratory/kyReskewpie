@@ -45,7 +45,19 @@ void setup() {
   baseGreen = GREEN_ADD;
   baseBlue = BLUE_ADD;
   
-  port = new Serial(this, SERIAL_PORT_NAME, SPEED);
+  if (connectsArduino()) {
+    port = new Serial(this, SERIAL_PORT_NAME, SPEED);
+  }
+}
+
+boolean connectsArduino() {
+  for (String portName : Serial.list()) {
+    if (portName.indexOf("usbmode") != -1) {
+      return true;
+    }
+  }
+  
+  return false;
 }
  
 void draw() {
@@ -108,7 +120,9 @@ void draw() {
   }
   
   if (!sentEffectStopSignal && particleWindowOutCheck()) {
-    port.write(EFFECT_STOP_SIGNAL);
+    if (connectsArduino()) {
+      port.write(EFFECT_STOP_SIGNAL);
+    }
     sentEffectStopSignal = true;
   }
 }
