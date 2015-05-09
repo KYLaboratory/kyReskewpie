@@ -140,12 +140,16 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
 {  
   const unsigned int data_length = 20;
   const unsigned long parameter_max = 468;
+  const unsigned long offset_single = 200;
+  const unsigned long offset_double = 300;
   char data[data_length] = {0};
+  unsigned long effect_param = 0;
   
   if(arms == ARMS_DOUBLE)
   {
     if(is_notify){
-      sprintf(data, "d,%d", ((param1.x + param2.x) / 2) * 100 / parameter_max );
+      effect_param =  (((param1.x + param2.x) / 2) - offset_double) * 100 / (parameter_max - offset_double);
+      sprintf(data, "d,%d,", effect_param );
       Serial.println(data);
       decrementN(HP, 5);
       is_notify = false;
@@ -156,11 +160,13 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
   {
     if(is_notify){
       decrementN(HP, 1);
-      if(param1.x < param2.x){ 
-        sprintf(data, "s,%d", param2.x * 100 / parameter_max);
+      if(param1.x < param2.x){
+        effect_param =  (param2.x - offset_single) * 100 / (parameter_max - offset_single); 
+        sprintf(data, "s,%d,", effect_param);
       }
       else{
-        sprintf(data, "s,%d",param1.x * 100 / parameter_max);
+        effect_param =  (param1.x - offset_single) * 100 / (parameter_max - offset_single); 
+        sprintf(data, "s,%d,",effect_param);
       }
       Serial.println(data);
       is_notify = false;
