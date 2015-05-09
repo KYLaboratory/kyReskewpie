@@ -44,6 +44,9 @@ void setup() {
   baseRed = RED_ADD;
   baseGreen = GREEN_ADD;
   baseBlue = BLUE_ADD;
+  baseRedAdd = RED_ADD;
+  baseGreenAdd = GREEN_ADD;
+  baseBlueAdd = BLUE_ADD;
   
   if (connectsArduino()) {
     port = new Serial(this, SERIAL_PORT_NAME, SPEED);
@@ -72,6 +75,66 @@ void draw() {
     
     for (int pid = 0; pid < MAX_PARTICLE; pid++) {
       particles[pid].move(xpos, ypos);
+    }
+    
+    int tRed = (int)baseRed;
+    int tGreen = (int)baseGreen;
+    int tBlue = (int)baseBlue;
+    
+    tRed *= tRed;
+    tGreen *= tGreen;
+    tBlue *= tBlue;
+    
+    loadPixels();
+    for (int pid = 0; pid < MAX_PARTICLE; pid++) {
+      
+      int left = max(0, particles[pid].x - BORDER);
+      int right = min(width, particles[pid].x + BORDER);
+      int top = max(0, particles[pid].y - BORDER);
+      int bottom = min(height, particles[pid].y + BORDER);
+      
+      for (int y = top; y < bottom; y++) {
+        for (int x = left; x < right; x++) {
+          int pixelIndex = x + y * width;
+          
+          int r = pixels[pixelIndex] >> 16 & 0xFF;
+          int g = pixels[pixelIndex] >> 8 & 0xFF;
+          int b = pixels[pixelIndex] & 0xFF;
+          
+          int dx = x - particles[pid].x;
+          int dy = y - particles[pid].y;
+          int distance = (dx * dx) + (dy * dy);
+          
+          if (distance < LIGHT_DISTANCE) {
+            int fixFistance = distance * LIGHT_FORCE_RATIO;
+            if (fixFistance == 0) {
+              fixFistance = 1;
+            }   
+            r = r + tRed / fixFistance;
+            g = g + tGreen / fixFistance;
+            b = b + tBlue / fixFistance;
+          }
+          
+          pixels[x + y * width] = color(r, g, b);
+        }
+      }
+    }
+    updatePixels();
+  } if (effectNumber == 2) {
+    println(sentEffectStopSignal);
+    fill(0, 0, 0, 15);
+    rect(0, 0, width, height);
+    
+    xpos += 55;
+    
+    baseRed += baseRedAdd;
+    baseGreen += baseGreenAdd;
+    baseBlue += baseBlueAdd;
+    colorOutCheck();
+    
+    for (int pid = 0; pid < MAX_PARTICLE; pid++) {
+      particles[pid].move(xpos, ypos);
+      particles[pid].explode();
     }
     
     int tRed = (int)baseRed;
@@ -172,6 +235,9 @@ void serialEvent(Serial port) {
   for (int i = 0; i < MAX_PARTICLE; i++) {
     particles[i] = new Particle();
   }
+  baseRed = RED_ADD;
+  baseGreen = GREEN_ADD;
+  baseBlue = BLUE_ADD;
   sentEffectStopSignal = false;
   effectNumber = decideEffectNumberFrom(readValue);
   xpos = 80;
@@ -196,8 +262,30 @@ void mousePressed() {
   for (int i = 0; i < MAX_PARTICLE; i++) {
     particles[i] = new Particle();
   }
+  baseRed = RED_ADD;
+  baseGreen = GREEN_ADD;
+  baseBlue = BLUE_ADD;
   sentEffectStopSignal = false;
   effectNumber = 1;
+  xpos = 80;
+  ypos = height / 2;
+  background(BACKGROUND_COLOR);
+  noFill();
+}
+
+void keyPressed() {
+  if (key == '1') {
+    effectNumber = 1;
+  } else if (key == '2') {
+    effectNumber = 2;
+  }
+  for (int i = 0; i < MAX_PARTICLE; i++) {
+    particles[i] = new Particle();
+  }
+  baseRed = RED_ADD;
+  baseGreen = GREEN_ADD;
+  baseBlue = BLUE_ADD;
+  sentEffectStopSignal = false;
   xpos = 80;
   ypos = height / 2;
   background(BACKGROUND_COLOR);
