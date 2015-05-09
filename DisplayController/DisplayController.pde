@@ -25,6 +25,7 @@ int readValue;
 static final int MAX_READ_VALUE = 100;
 int effectNumber;
 boolean sentEffectStopSignal;
+boolean canPlaySE;
 
 float halfWidth, halfHeight;
 final int MAX_LINE = 40;
@@ -49,6 +50,7 @@ void setup() {
   halfWidth = width / 2;
   halfHeight = height / 2;
   neonStrength = NEON_WEAK;
+  canPlaySE = false;
   
   for(int i = 0; i < MAX_LINE; i++){
     neonLine[i] = new NeonLine();
@@ -90,6 +92,10 @@ void draw() {
   }
   
   if (effectNumber == 1) {
+    if (canPlaySE) {
+      playSE();
+      canPlaySE = false;
+    }
     fill(0, 0, 0, 20);
     rect(0, 0, width, height);
     
@@ -101,6 +107,10 @@ void draw() {
     }
     applyAdditiveSynthesis();
   } else if (effectNumber == 2) {
+    if (canPlaySE) {
+      playSE();
+      canPlaySE = false;
+    }
     fill(0, 0, 0, 15);
     rect(0, 0, width, height);
     
@@ -116,6 +126,45 @@ void draw() {
     }
     applyAdditiveSynthesis();
   } else if (effectNumber == 3) {
+    if (canPlaySE) {
+      playSE();
+      canPlaySE = false;
+    }
+    if (sentEffectStopSignal) {
+      fill(0, 0, 0, 20);
+    } else {
+      fill(0, 0, 0, 10);
+    }
+    rect(0, 0, width, height);
+   
+    int deadCounter = 0;
+    loadPixels();
+    for(int j = 0; j < MAX_LINE;j++){
+      if(neonLine[j].live) {
+        for(int i = 0; i < DRAW_TIMES; i++){
+          neonLine[j].draw(pixels);
+        }
+      } else {
+        deadCounter++;
+      }
+    }
+    updatePixels();
+    
+    if(deadCounter >= BORDER_DEAD_COUNT && !neonEffectStarted){
+      neonEffectStarted = true;
+      for(int i = 0; i < MAX_LINE; i++){
+        if(!neonLine[i].live){
+          float x = 0;
+          float y = (height / 2) + random(20);
+          neonLine[i].revival(x, y);
+        }
+      }
+    }
+  } else if (effectNumber == 4) {
+    if (canPlaySE) {
+      playSE();
+      canPlaySE = false;
+    }
     if (sentEffectStopSignal) {
       fill(0, 0, 0, 20);
     } else {
@@ -154,6 +203,10 @@ void draw() {
     }
     sentEffectStopSignal = true;
   }
+}
+
+void playSE() {
+  
 }
 
 void colorOutCheck() {
@@ -272,18 +325,21 @@ int decideEffectNumberFrom(String readCommand, int readValue) {
   }
   
   if (readCommand.equals("s")) {
+    canPlaySE = true;
     if (readValue <= (MAX_READ_VALUE / 2)) {
       return 1;
     } else {
       return 2;
     }
   } else if (readCommand.equals("d")) {
+    canPlaySE = true;
     if (readValue <= (MAX_READ_VALUE / 2)) {
       neonStrength = NEON_WEAK;
+      return 3;
     } else {
       neonStrength = NEON_STRONG;
+      return 4;
     }
-    return 3;
   } else {
     return ERROR_READ_COMMAND;
   }
@@ -291,26 +347,31 @@ int decideEffectNumberFrom(String readCommand, int readValue) {
 
 void mousePressed() {
   initializeDisplay();
+  canPlaySE = true;
   effectNumber = 1;
 }
 
 void keyPressed() {
   if (key == '1') {
     initializeDisplay();
+    canPlaySE = true;
     effectNumber = 1;
   } else if (key == '2') {
     initializeDisplay();
+    canPlaySE = true;
     effectNumber = 2;
   }  else if (key == '3') {
     initializeDisplay();
+    canPlaySE = true;
     neonEffectStarted = false;
     neonStrength = NEON_WEAK;
     effectNumber = 3;
   } else if (key == '4') {
     initializeDisplay();
+    canPlaySE = true;
     neonEffectStarted = false;
     neonStrength = NEON_STRONG;
-    effectNumber = 3;
+    effectNumber = 4;
   }
 }
 
