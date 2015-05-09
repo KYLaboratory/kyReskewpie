@@ -21,6 +21,7 @@
 
 #define DELAY_TIME 50
 #define NUM_LEDS 1
+#define INITIAL_ANGLE 80
 
 //sensor
 struct vector3D
@@ -82,7 +83,7 @@ void initializeActuator()
   pinMode(OUTPUT_VIBRATOR, OUTPUT);
   leds.init();
   myservo.attach(OUTPUT_SERVO);  // attaches the servo on pin 9 to the servo object
-  myservo.write(80);//初期角度を８０度に設定
+  myservo.write(INITIAL_ANGLE);//初期角度を８０度に設定
   pinMode(OUTPUT_LED, OUTPUT);
   digitalWrite(OUTPUT_LED, HIGH);
 }
@@ -149,7 +150,12 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
   if(arms == ARMS_DOUBLE)
   {
     if(is_notify){
-      effect_param =  (((param1.x + param2.x) / 2) - offset_double) * 100 / (parameter_max - offset_double);
+      if(param1.x < param2.x){
+        effect_param =  ( param2.x - offset_double) * 100 / (parameter_max - offset_double);
+      }
+      else{
+        effect_param =  ( param1.x - offset_double) * 100 / (parameter_max - offset_double);
+      }
       sprintf(data, "d,%d,", effect_param );
       Serial.println(data);
       decrementN(HP, 5);
@@ -163,12 +169,11 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
       decrementN(HP, 1);
       if(param1.x < param2.x){
         effect_param =  (param2.x - offset_single) * 100 / (parameter_max - offset_single); 
-        sprintf(data, "s,%d,", effect_param);
       }
       else{
         effect_param =  (param1.x - offset_single) * 100 / (parameter_max - offset_single); 
-        sprintf(data, "s,%d,",effect_param);
       }
+      sprintf(data, "s,%d,",effect_param);
       Serial.println(data);
       is_notify = false;
       vibration();
@@ -219,12 +224,11 @@ void actuatorLoop()// LEDbarのみの記述
     
 }
 
-
 void serialEvent() {  
-  const int DELAY_TIME_LEDbar=300;  //ms
-  const int DELAY_TIME_SERVO=3000;  //ms
-  const int SERVO_MIN 80;
-  const int SERVO_MAX 120;
+  const int DELAY_TIME_LEDbar = 300;  //ms
+  const int DELAY_TIME_SERVO = 3000;  //ms
+  const int SERVO_MIN = 80;
+  const int SERVO_MAX = 120;
   if (Serial.read() == EFFECT_STOP_SIGNAL) {
     is_notify = true;
     if(HP<=0){  // finish game
@@ -237,14 +241,17 @@ void serialEvent() {
         myservo.write(i);
         delay(25);
       }//サーボを動かす(120度)
+      myservo.write(120); //サーボを動かす(120度)
       leds.setColorRGB(0, 0, 0, 0); //RGB LED OFF
       digitalWrite(13, LOW);
-      //effectLED();
+      effectLED();
       delay(DELAY_TIME_SERVO);
       for(int i=SERVO_MAX;i>=SERVO_MIN;i--){
         myservo.write(i);
         delay(25); 
       } //サーボを動かす(80度)
+
+      myservo.write(80); //サーボを動かす(80度)
       
     }else if(HP>0){  
       //no action
