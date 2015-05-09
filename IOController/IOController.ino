@@ -244,7 +244,6 @@ void serialEvent() {
         myservo.write(i);
         delay(25);
       }//サーボを動かす(120度)
-      myservo.write(120); //サーボを動かす(120度)
       leds.setColorRGB(0, 0, 0, 0); //RGB LED OFF
       digitalWrite(13, LOW);
       effectLED();
@@ -253,7 +252,6 @@ void serialEvent() {
         myservo.write(i);
         delay(25); 
       } //サーボを動かす(80度)
-      myservo.write(80); //サーボを動かす(80度)  
     }
     else if(HP > 0){
     }
