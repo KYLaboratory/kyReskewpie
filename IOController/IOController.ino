@@ -82,6 +82,7 @@ void initializeActuator()
   pinMode(OUTPUT_VIBRATOR, OUTPUT);
   leds.init();
   myservo.attach(OUTPUT_SERVO);  // attaches the servo on pin 9 to the servo object
+  myservo.write(80);//初期角度を８０度に設定
   pinMode(OUTPUT_LED, OUTPUT);
   digitalWrite(OUTPUT_LED, HIGH);
 }
@@ -221,7 +222,9 @@ void actuatorLoop()// LEDbarのみの記述
 
 void serialEvent() {  
   const int DELAY_TIME_LEDbar=300;  //ms
-  const int DELAY_TIME_SERVO=2000;  //ms
+  const int DELAY_TIME_SERVO=3000;  //ms
+  const int SERVO_MIN 80;
+  const int SERVO_MAX 120;
   if (Serial.read() == EFFECT_STOP_SIGNAL) {
     is_notify = true;
     if(HP<=0){  // finish game
@@ -230,12 +233,18 @@ void serialEvent() {
       bar.setLevel(LEDbarValue);
       delay(DELAY_TIME_LEDbar);
       digitalWrite(OUTPUT_SOLENOID, LOW);
-      myservo.write(120); //サーボを動かす(120度)
+      for(int i=SERVO_MIN;i<=SERVO_MAX;i++){
+        myservo.write(i);
+        delay(25);
+      }//サーボを動かす(120度)
       leds.setColorRGB(0, 0, 0, 0); //RGB LED OFF
       digitalWrite(13, LOW);
       //effectLED();
       delay(DELAY_TIME_SERVO);
-      myservo.write(80); //サーボを動かす(80度)
+      for(int i=SERVO_MAX;i>=SERVO_MIN;i--){
+        myservo.write(i);
+        delay(25); 
+      } //サーボを動かす(80度)
       
     }else if(HP>0){  
       //no action
