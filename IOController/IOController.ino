@@ -20,21 +20,7 @@
 
 #define DELAY_TIME 50
 
-<<<<<<< HEAD
-enum ARMS_STATUS{
-  ARMS_NONE,
-  ARMS_SINGLE,
-  ARMS_DOUBLE
-};
-=======
-//actuation
-int LEDbarValue = 3;//LED bar value
-int solenoidState = HIGH;//solenoid
-int HP; //hit point 
-
-Grove_LED_Bar bar(9, 8, 0);  // Clock pin, Data pin, Orientation
->>>>>>> 86e3b413842fe13b92cdaf225ad3b30aab48975d
-
+//sensor
 struct vector3D
 {
   unsigned long x;
@@ -43,10 +29,25 @@ struct vector3D
   unsigned long norm;
 };
 
+enum ARMS_STATUS
+{
+  ARMS_NONE,
+  ARMS_SINGLE,
+  ARMS_DOUBLE
+};
+
 ARMS_STATUS judgeArmsStatus(const struct vector3D& param1, const struct vector3D& param2);
 
 struct vector3D initParam1 = {0, 0, 0, 0};
 struct vector3D initParam2 = {0, 0, 0, 0};
+
+//actuation
+int LEDbarValue = 3;//LED bar value
+int solenoidState = HIGH;//solenoid
+int HP; //hit point 
+
+Grove_LED_Bar bar(9, 8, 0);  // Clock pin, Data pin, Orientation
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -95,8 +96,11 @@ void sensorLoop()
   
   switch(judgeArmsStatus(deltaParam1, deltaParam2))
   {
+    case ARMS_DOUBLE:
+      notifyEffect(deltaParam1, deltaParam2, 2);
+      break;
     case ARMS_SINGLE:
-      notifyEffect(deltaParam1);
+      notifyEffect(deltaParam1, deltaParam2, 1);
       break;
     default:
       break;
@@ -108,7 +112,14 @@ ARMS_STATUS judgeArmsStatus(const struct vector3D& param1, const struct vector3D
 {
   const unsigned long thresh = 300;
   
-  if(param1.x > thresh)
+  const bool isArm1Moving = param1.x > thresh;
+  const bool isArm2Moving = param2.x > thresh;
+  
+  if(isArm1Moving && isArm2Moving)
+  {
+    return ARMS_DOUBLE;
+  }
+  else if(isArm1Moving || isArm2Moving)
   {
     return ARMS_SINGLE;
   }
@@ -125,18 +136,39 @@ struct vector3D calcDiffVector3D(const struct vector3D& currentParam, const stru
   return deltaAccParam;
 }
 
-void notifyEffect(const struct vector3D& param)
+void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, const int arms)
 {
   //unsigned int parameter = rv_parameter/10;
   //Serial.print(parameter);
   //Serial.print('\n');
-  Serial.print(param.x);
+  Serial.print(param1.x);
   Serial.print("\t");
-  Serial.print(param.y);
+  Serial.print(param1.y);
   Serial.print("\t");
-  Serial.print(param.z);  
+  Serial.print(param1.z);  
   Serial.print("\t");
-  Serial.print(param.norm);
+  Serial.print(param1.norm);
+  Serial.print("\t");
+  Serial.print(param2.x);
+  Serial.print("\t");
+  Serial.print(param2.y);
+  Serial.print("\t");
+  Serial.print(param2.z);  
+  Serial.print("\t");
+  Serial.print(param2.norm);
+  Serial.print("\t");
+  if(arms == 2)
+  {
+    Serial.print("DOUBLE");
+  }
+  else if(arms == 1)
+  {
+    Serial.print("SINGLE");
+  }
+  else
+  {
+    Serial.print("NONE");
+  }
   Serial.print("\n");
 }
 
