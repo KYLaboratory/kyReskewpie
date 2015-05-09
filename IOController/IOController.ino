@@ -1,3 +1,9 @@
+#include <Grove_LED_Bar.h>
+
+#define OUTPUT_SOLENOID 4
+#define INPUT_BUTTON 6
+#define OUTPUT_VIBRATOR 2
+
 #define OUTPUT_LED 12
 #define SPEED 9600
 
@@ -9,6 +15,13 @@
 #define EFFECT_STOP_SIGNAL 1
 
 #define DELAY_TIME 50
+
+//actuation
+int LEDbarValue = 3;//LED bar value
+int solenoidState = HIGH;//solenoid
+int HP; //hit point 
+
+Grove_LED_Bar bar(9, 8, 0);  // Clock pin, Data pin, Orientation
 
 struct vector3D
 {
@@ -45,7 +58,8 @@ void initializeSensor()
 
 void initializeActuator()
 {
-  
+  pinMode(OUTPUT_SOLENOID, OUTPUT);
+  pinMode(INPUT_BUTTON, INPUT);
 }
 
 void loop() {
@@ -101,17 +115,31 @@ unsigned long getDifference(unsigned long rv_a, unsigned long rv_b)
   }
 }
 
-void actuatorLoop()
+void actuatorLoop()// LEDbarのみの記述
 {
-  if (Serial.available()) {
-    if (Serial.read() == EFFECT_STOP_SIGNAL) {
-      digitalWrite(OUTPUT_LED, HIGH);
-    } else {
-      digitalWrite(OUTPUT_LED, LOW);
+    //　ここから
+    if(HP>0){
+      LEDbarValue = HP;
+    }else if(HP<=0){
+      LEDbarValue = 0;
     }
-  }
+    bar.setLevel(LEDbarValue);
+    // ここまで　をIOControllerにマージする。
 }
 
 
-
-
+void serialEvent() {  
+  if (Serial.read() == EFFECT_STOP_SIGNAL) {
+    if(HP<=0){
+      digitalWrite(OUTPUT_SOLENOID, HIGH);
+      LEDbarValue = 0;
+      bar.setLevel(LEDbarValue);
+      delay(300);
+      digitalWrite(OUTPUT_SOLENOID, LOW);
+    }else if(HP>0){
+      digitalWrite(OUTPUT_VIBRATOR, HIGH);
+      delay(300);
+      digitalWrite(OUTPUT_VIBRATOR, LOW);      
+    }
+  }
+}
