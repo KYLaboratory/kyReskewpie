@@ -37,6 +37,7 @@ enum ARMS_STATUS
 };
 
 ARMS_STATUS judgeArmsStatus(const struct vector3D& param1, const struct vector3D& param2);
+void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, const ARMS_STATUS arms);
 
 struct vector3D initParam1 = {0, 0, 0, 0};
 struct vector3D initParam2 = {0, 0, 0, 0};
@@ -94,18 +95,7 @@ void sensorLoop()
   const struct vector3D currentParam2 = createVector3D(analogRead(ANALOG_PIN_X2), analogRead(ANALOG_PIN_Y2), analogRead(ANALOG_PIN_Z2));
   const struct vector3D deltaParam2 = calcDiffVector3D(currentParam2, initParam2);
   
-  switch(judgeArmsStatus(deltaParam1, deltaParam2))
-  {
-    case ARMS_DOUBLE:
-      notifyEffect(deltaParam1, deltaParam2, 2);
-      break;
-    case ARMS_SINGLE:
-      notifyEffect(deltaParam1, deltaParam2, 1);
-      break;
-    default:
-      break;
-  }
-  
+  notifyEffect(deltaParam1, deltaParam2, judgeArmsStatus(deltaParam1, deltaParam2));
 }
 
 ARMS_STATUS judgeArmsStatus(const struct vector3D& param1, const struct vector3D& param2)
@@ -136,40 +126,71 @@ struct vector3D calcDiffVector3D(const struct vector3D& currentParam, const stru
   return deltaAccParam;
 }
 
-void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, const int arms)
-{
-  //unsigned int parameter = rv_parameter/10;
-  //Serial.print(parameter);
-  //Serial.print('\n');
-  Serial.print(param1.x);
-  Serial.print("\t");
-  Serial.print(param1.y);
-  Serial.print("\t");
-  Serial.print(param1.z);  
-  Serial.print("\t");
-  Serial.print(param1.norm);
-  Serial.print("\t");
-  Serial.print(param2.x);
-  Serial.print("\t");
-  Serial.print(param2.y);
-  Serial.print("\t");
-  Serial.print(param2.z);  
-  Serial.print("\t");
-  Serial.print(param2.norm);
-  Serial.print("\t");
-  if(arms == 2)
+void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, const ARMS_STATUS arms)
+{  
+  static bool is_notify = true;
+  
+  if(arms == ARMS_DOUBLE)
   {
-    Serial.print("DOUBLE");
+    if(is_notify){
+      Serial.print(param1.x);
+      Serial.print("\t");
+      Serial.print(param1.y);
+      Serial.print("\t");
+      Serial.print(param1.z);  
+      Serial.print("\t");
+      Serial.print(param1.norm);
+      Serial.print("\t");
+      Serial.print(param2.x);
+      Serial.print("\t");
+      Serial.print(param2.y);
+      Serial.print("\t");
+      Serial.print(param2.z);  
+      Serial.print("\t");
+      Serial.print(param2.norm);
+      Serial.print("\t");
+      Serial.println("DOUBLE");
+      is_notify = false;
+    }
   }
-  else if(arms == 1)
+  else if(arms == ARMS_SINGLE)
   {
-    Serial.print("SINGLE");
+    if(is_notify){
+      Serial.print(param1.x);
+      Serial.print("\t");
+      Serial.print(param1.y);
+      Serial.print("\t");
+      Serial.print(param1.z);  
+      Serial.print("\t");
+      Serial.print(param1.norm);
+      Serial.print("\t");
+      Serial.print(param2.x);
+      Serial.print("\t");
+      Serial.print(param2.y);
+      Serial.print("\t");
+      Serial.print(param2.z);  
+      Serial.print("\t");
+      Serial.print(param2.norm);
+      Serial.print("\t");
+      Serial.println("SINGLE");
+      is_notify = false;
+    }
   }
   else
   {
-    Serial.print("NONE");
+    const unsigned int wait_thresh = 100;
+    static unsigned int wait_count = 0;
+    if(wait_count == wait_thresh){
+      Serial.println("READY");
+      is_notify = true;
+      wait_count = 0;
+    }
+    else{
+      if(!is_notify)wait_count++;
+    }
+    
   }
-  Serial.print("\n");
+  
 }
 
 unsigned long getDifference(unsigned long rv_a, unsigned long rv_b)
