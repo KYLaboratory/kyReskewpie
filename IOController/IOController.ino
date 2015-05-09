@@ -193,6 +193,12 @@ void actuatorLoop()// LEDbarのみの記述
     
     // if(is_notify)でシングルLED光らせる　else シングルLED消灯
     // hogehoge
+    if(is_notify){
+      leds.setColorRGB(0, 0, 0, 250);
+    }else{
+      leds.setColorRGB(0, 250, 0, 0);
+    }
+    
 }
 
 
@@ -200,14 +206,15 @@ void serialEvent() {
   const int DELAY_TIME_LEDbar=300;  //micro second
   const int DELAY_TIME_VIBRATOR=300;  //micro second
   if (Serial.read() == EFFECT_STOP_SIGNAL) {
-    if(HP<=0){
+    if(HP<=0){  // finish game
       digitalWrite(OUTPUT_SOLENOID, HIGH);
       LEDbarValue = 0;
       bar.setLevel(LEDbarValue);
       delay(DELAY_TIME_LEDbar);
-      digitalWrite(OUTPUT_SOLENOID, LOW);
+      digitalWrite(OUTPUT_SOLENOID, LOW); //
+      leds.setColorRGB(0, 0, 0, 0); //RGB LED OFF
       effectLED();
-    }else if(HP>0){
+    }else if(HP>0){  //vibration 
       digitalWrite(OUTPUT_VIBRATOR, HIGH);
       delay(DELAY_TIME_VIBRATOR);
       digitalWrite(OUTPUT_VIBRATOR, LOW);      
@@ -215,7 +222,7 @@ void serialEvent() {
   }
 }
 
-void effectLED(){
+void effectLED(){ // effect LEDbar in finish time
   const int DELAY_TIME_EFFECTLED = 700;
   int k;
   for(k=0;k<3;k++){
