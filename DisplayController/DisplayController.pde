@@ -365,9 +365,11 @@ int decideEffectNumberFrom(String readCommand, int readValue) {
   } else if (readCommand.equals("d")) {
     canPlaySE = true;
     if (readValue <= (MAX_READ_VALUE / 2)) {
+      neonEffectStarted = false;
       neonStrength = NEON_WEAK;
       return 3;
     } else {
+      neonEffectStarted = false;
       neonStrength = NEON_STRONG;
       return 4;
     }
