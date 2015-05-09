@@ -63,12 +63,9 @@ void setup() {
   Serial.begin(SPEED);
   initializeSensor();
   initializeActuator();
-<<<<<<< HEAD
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
-=======
   myservo.attach(OUTPUT_SERVO);  // attaches the servo on pin 9 to the servo object
->>>>>>> fc89fd5a49c963e6fcc04cfdaaf3d36a416b6215
 }
 
 struct vector3D createVector3D(unsigned long x, unsigned long y, unsigned long z)
@@ -150,6 +147,7 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
       Serial.println(data);
       decrementN(HP, 5);
       is_notify = false;
+      vibration();
     }
   }
   else if(arms == ARMS_SINGLE)
@@ -164,11 +162,21 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
       }
       Serial.println(data);
       is_notify = false;
+      vibration();
     }
   }
   else{
   }  
 }
+
+void vibration(){
+  const int DELAY_TIME_VIBRATOR=300;  //ms
+
+  digitalWrite(OUTPUT_VIBRATOR, HIGH);
+  delay(DELAY_TIME_VIBRATOR);
+  digitalWrite(OUTPUT_VIBRATOR, LOW); 
+}
+
 void decrementN(int& rv_value, int n)
 {
   for(int i = 0; i < n; i++)if(rv_value > 0)rv_value--;
@@ -209,7 +217,6 @@ void actuatorLoop()// LEDbarのみの記述
 
 void serialEvent() {  
   const int DELAY_TIME_LEDbar=300;  //ms
-  const int DELAY_TIME_VIBRATOR=300;  //ms
   const int DELAY_TIME_SERVO=2000;  //ms
   if (Serial.read() == EFFECT_STOP_SIGNAL) {
     is_notify = true;
@@ -226,10 +233,8 @@ void serialEvent() {
       delay(DELAY_TIME_SERVO);
       myservo.write(80); //サーボを動かす(80度)
       
-    }else if(HP>0){  //vibration 
-      digitalWrite(OUTPUT_VIBRATOR, HIGH);
-      delay(DELAY_TIME_VIBRATOR);
-      digitalWrite(OUTPUT_VIBRATOR, LOW);      
+    }else if(HP>0){  
+      //no action
     }
   }
 }
@@ -255,3 +260,4 @@ void effectLED(){ // effect LEDbar in finish time
     delay(DELAY_TIME_EFFECTLED);
   }
 }
+
