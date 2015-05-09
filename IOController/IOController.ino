@@ -1,8 +1,10 @@
 #include <Grove_LED_Bar.h>
 #include <ChainableLED.h>
+#include <Servo.h>
 
 #define OUTPUT_SOLENOID 4
 #define OUTPUT_VIBRATOR 2
+#define OUTPUT_SERVO 3
 
 #define OUTPUT_LED 12
 #define SPEED 9600
@@ -54,11 +56,14 @@ int HP = 10; //hit point
 Grove_LED_Bar bar(9, 8, 0);  // Clock pin, Data pin, Orientation
 ChainableLED leds(6, 7, NUM_LEDS);
 
+Servo myservo;  // create servo object to control a servo
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(SPEED);
   initializeSensor();
   initializeActuator();
+  myservo.attach(OUTPUT_SERVO);  // attaches the servo on pin 9 to the servo object
 }
 
 struct vector3D createVector3D(unsigned long x, unsigned long y, unsigned long z)
@@ -198,6 +203,7 @@ void actuatorLoop()// LEDbarのみの記述
 void serialEvent() {  
   const int DELAY_TIME_LEDbar=300;  //ms
   const int DELAY_TIME_VIBRATOR=300;  //ms
+  const int DELAY_TIME_SERVO=2000;  //ms
   if (Serial.read() == EFFECT_STOP_SIGNAL) {
     is_notify = true;
     if(HP<=0){  // finish game
@@ -206,8 +212,12 @@ void serialEvent() {
       bar.setLevel(LEDbarValue);
       delay(DELAY_TIME_LEDbar);
       digitalWrite(OUTPUT_SOLENOID, LOW);
+      myservo.write(120); //サーボを動かす(120度)
       leds.setColorRGB(0, 0, 0, 0); //RGB LED OFF
       //effectLED();
+      delay(DELAY_TIME_SERVO);
+      myservo.write(80); //サーボを動かす(80度)
+      
     }else if(HP>0){  //vibration 
       digitalWrite(OUTPUT_VIBRATOR, HIGH);
       delay(DELAY_TIME_VIBRATOR);
