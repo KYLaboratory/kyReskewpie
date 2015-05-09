@@ -59,6 +59,8 @@ void setup() {
   Serial.begin(SPEED);
   initializeSensor();
   initializeActuator();
+  pinMode(13, OUTPUT);
+  digitalWrite(13, HIGH);
 }
 
 struct vector3D createVector3D(unsigned long x, unsigned long y, unsigned long z)
@@ -138,15 +140,14 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
     if(is_notify){
       sprintf(data, "d,%d", param1.x * 100 / parameter_max);
       Serial.println(data);
-      if(HP > 0)HP--;
-      if(HP > 0)HP--;
+      decrementN(HP, 5);
       is_notify = false;
     }
   }
   else if(arms == ARMS_SINGLE)
   {
     if(is_notify){
-      if(HP > 0)HP--;
+      decrementN(HP, 1);
       if(param1.x < param2.x){ 
         sprintf(data, "s,%d", param2.x * 100 / parameter_max);
       }
@@ -157,11 +158,14 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
       is_notify = false;
     }
   }
-  else
-  {
-  }
-  
+  else{
+  }  
 }
+void decrementN(int& rv_value, int n)
+{
+  for(int i = 0; i < n; i++)if(rv_value > 0)rv_value--;
+}
+
 
 unsigned long getDifference(unsigned long rv_a, unsigned long rv_b)
 {
@@ -207,6 +211,7 @@ void serialEvent() {
       delay(DELAY_TIME_LEDbar);
       digitalWrite(OUTPUT_SOLENOID, LOW);
       leds.setColorRGB(0, 0, 0, 0); //RGB LED OFF
+      digitalWrite(13, LOW);
       //effectLED();
     }else if(HP>0){  //vibration 
       digitalWrite(OUTPUT_VIBRATOR, HIGH);
