@@ -27,10 +27,14 @@ int effectNumber;
 boolean sentEffectStopSignal;
 
 float halfWidth, halfHeight;
-final int MAX_LINE = 30;
+final int MAX_LINE = 40;
 NeonLine[] neonLine = new NeonLine[MAX_LINE];
-final int DRAW_TIMES = 10;
+final int DRAW_TIMES = 15;
 final int BORDER_DEAD_COUNT = 8;
+boolean neonEffectStarted = false;
+int neonStrength;
+static final int NEON_WEAK = 2;
+static final int NEON_STRONG = 4;
 
 static final int ERROR_READ_VALUE = -1;
 static final int ERROR_READ_COMMAND = -2;
@@ -44,6 +48,7 @@ void setup() {
   effectNumber = 0;
   halfWidth = width / 2;
   halfHeight = height / 2;
+  neonStrength = NEON_WEAK;
   
   for(int i = 0; i < MAX_LINE; i++){
     neonLine[i] = new NeonLine();
@@ -111,12 +116,15 @@ void draw() {
     }
     applyAdditiveSynthesis();
   } else if (effectNumber == 3) {
-    fill(0, 0, 0, 10);
+    if (sentEffectStopSignal) {
+      fill(0, 0, 0, 20);
+    } else {
+      fill(0, 0, 0, 10);
+    }
     rect(0, 0, width, height);
    
     int deadCounter = 0;
     loadPixels();
-    
     for(int j = 0; j < MAX_LINE;j++){
       if(neonLine[j].live) {
         for(int i = 0; i < DRAW_TIMES; i++){
@@ -128,24 +136,19 @@ void draw() {
     }
     updatePixels();
     
-    if(deadCounter >= BORDER_DEAD_COUNT){
-      float x = 0,y = 0;
-      if(random(1) > 0.5) {
-        x = int(random(2)) * width;
-        y = random(height);
-      } else {
-        x = random(width);
-        y = int(random(2)) * height;
-      }
+    if(deadCounter >= BORDER_DEAD_COUNT && !neonEffectStarted){
+      neonEffectStarted = true;
       for(int i = 0; i < MAX_LINE; i++){
         if(!neonLine[i].live){
+          float x = 0;
+          float y = (height / 2) + random(20);
           neonLine[i].revival(x, y);
         }
       }
     }
   }
   
-  if (!sentEffectStopSignal && particleWindowOutCheck()) {
+  if (!sentEffectStopSignal && (particleWindowOutCheck() || neonWindowOutCheck())) {
     if (connectsArduino()) {
       port.write(EFFECT_STOP_SIGNAL);
     }
@@ -237,6 +240,18 @@ boolean particleWindowOutCheck() {
   return false;
 }
 
+boolean neonWindowOutCheck() {
+  if (!neonEffectStarted) {
+    return false;
+  }
+  for (int i = 0; i < MAX_LINE; i++) {
+    if (!neonLine[i].live) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void serialEvent(Serial serialPort) {
   String inBuffer = serialPort.readStringUntil('\n');
   if (inBuffer != null) {
@@ -257,9 +272,18 @@ int decideEffectNumberFrom(String readCommand, int readValue) {
   }
   
   if (readCommand.equals("s")) {
-    return 1;
+    if (readValue <= (MAX_READ_VALUE / 2)) {
+      return 1;
+    } else {
+      return 2;
+    }
   } else if (readCommand.equals("d")) {
-    return 2;
+    if (readValue <= (MAX_READ_VALUE / 2)) {
+      neonStrength = NEON_WEAK;
+    } else {
+      neonStrength = NEON_STRONG;
+    }
+    return 3;
   } else {
     return ERROR_READ_COMMAND;
   }
@@ -279,6 +303,13 @@ void keyPressed() {
     effectNumber = 2;
   }  else if (key == '3') {
     initializeDisplay();
+    neonEffectStarted = false;
+    neonStrength = NEON_WEAK;
+    effectNumber = 3;
+  } else if (key == '4') {
+    initializeDisplay();
+    neonEffectStarted = false;
+    neonStrength = NEON_STRONG;
     effectNumber = 3;
   }
 }
@@ -355,9 +386,15 @@ class NeonLine {
   void revival(float _x, float _y){
     x = _x;
     y = _y;
-    speed = 1 + random(0.5);
+    speed = 2;
     direction = degrees(atan2(halfHeight - y, halfWidth - x));
-    addDirection = 0;
+    direction = random(50) - 25.0;
+    if (direction >= 0) {
+      addDirection = -0.03;
+    } else {
+      addDirection = 0.03;
+    }
+    
     accelDirection = 0;
     addlDirectionRange = random(6);
     stateCounter = -random(200);
@@ -369,10 +406,10 @@ class NeonLine {
       x += cos(radians(direction)) * speed;
       y += sin(radians(direction)) * speed;
       direction += addDirection;
-      addDirection += accelDirection;
+      //addDirection += accelDirection;
       
       stateCounter++;
-      if(stateCounter >= BORDER_STATE_COUNTER) {
+      if(false) {
         stateCounter = 0;
         addDirection = random(addlDirectionRange) - addlDirectionRange / 2;
       }
@@ -387,14 +424,14 @@ class NeonLine {
         return ;
       }
       
-      for(int i = 1; i < 4; i++){
+      for(int i = 1; i < neonStrength; i++){
         neonDia(pixels, i);
       }
     }
   }
   
   private void neonDia(int[] px, int size){
-    float size2 = size * size / 2;
+    float size2 = 8 * size * size / 2;
  
     for(int j = max(0, (int)(y - size2)); j < min(height - 1, (int)(y + size2)); j++){
       float wide = size2 - abs(j - y);
