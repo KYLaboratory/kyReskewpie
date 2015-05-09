@@ -193,7 +193,7 @@ boolean particleWindowOutCheck() {
 }
 
 void serialEvent(Serial port) {
-  String inBuffer = port.readString();
+  String inBuffer = port.readStringUntil('\n');
   if (inBuffer != null) {
     String[] inBuffers = inBuffer.split(",", 0);
     readCommand = inBuffers[0];
