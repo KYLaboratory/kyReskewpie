@@ -2,8 +2,9 @@ import processing.serial.*;
 import ddf.minim.*;
 
 Serial port;
-static final String SERIAL_PORT_NAME = Serial.list()[2];
+//String SERIAL_PORT_NAME = Serial.list()[2];
 static final int EFFECT_STOP_SIGNAL = 1;
+static final int EFFECT_RESET_SIGNAL = 2;
 static final int SPEED = 9600;
 static final int WINDOW_WIDTH = 1350;
 static final int WINDOW_HEIGHT = 700;
@@ -64,7 +65,11 @@ void setup() {
   }
   
   if (connectsArduino()) {
-    port = new Serial(this, SERIAL_PORT_NAME, SPEED);
+    for (String portName : Serial.list()) {
+      if (portName.indexOf("usbmode") != -1) {
+        port = new Serial(this, portName, SPEED);
+      }
+    }
   }
   
   // audio setup
@@ -405,6 +410,10 @@ void keyPressed() {
     neonEffectStarted = false;
     neonStrength = NEON_STRONG;
     effectNumber = 4;
+  } else if (key == 'r') {
+    if (connectsArduino()) {
+      port.write(EFFECT_RESET_SIGNAL);
+    }
   }
 }
 
