@@ -227,7 +227,6 @@ void effectLED(){
     bar.setBits(0b000000101010101);
     delay(700);
   }
-  int k;
   for(k=0;k<3;k++){
     bar.setBits(0b000001111111111);
     delay(800);
