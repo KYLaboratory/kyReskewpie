@@ -325,7 +325,7 @@ boolean particleWindowOutCheck() {
 }
 
 boolean neonWindowOutCheck() {
-  if (!neonEffectStarted) {
+  if (!neonEffectStarted || effectNumber == 1 || effectNumber == 2) {
     return false;
   }
   for (int i = 0; i < MAX_LINE; i++) {
