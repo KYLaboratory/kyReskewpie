@@ -17,7 +17,6 @@
 #define ANALOG_PIN_Y2 7
 #define ANALOG_PIN_Z2 8
 
-//#define EFFECT_START_SIGNAL 1
 #define EFFECT_STOP_SIGNAL 1
 
 #define DELAY_TIME 50
@@ -63,12 +62,9 @@ void setup() {
   Serial.begin(SPEED);
   initializeSensor();
   initializeActuator();
-<<<<<<< HEAD
+
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);
-=======
-  myservo.attach(OUTPUT_SERVO);  // attaches the servo on pin 9 to the servo object
->>>>>>> fc89fd5a49c963e6fcc04cfdaaf3d36a416b6215
 }
 
 struct vector3D createVector3D(unsigned long x, unsigned long y, unsigned long z)
@@ -88,7 +84,7 @@ void initializeActuator()
   pinMode(OUTPUT_SOLENOID, OUTPUT);
   pinMode(OUTPUT_VIBRATOR, OUTPUT);
   leds.init();
-  
+  myservo.attach(OUTPUT_SERVO);  // attaches the servo on pin 9 to the servo object
 }
 
 void loop() {
@@ -112,19 +108,23 @@ void sensorLoop()
 ARMS_STATUS judgeArmsStatus(const struct vector3D& param1, const struct vector3D& param2)
 {
   const unsigned long thresh = 300;
+  const unsigned long subthresh = 200;
   
   const bool isArm1Moving = param1.x > thresh;
   const bool isArm2Moving = param2.x > thresh;
-  
-  if(isArm1Moving && isArm2Moving)
-  {
+  const bool isArm1MovingGentle = param1.x > subthresh;
+  const bool isArm2MovingGentle = param2.x > subthresh;
+
+  if((isArm1Moving && isArm2Moving)
+  || (isArm2Moving && isArm1MovingGentle)
+  || (isArm1Moving && isArm2MovingGentle)){
     return ARMS_DOUBLE;
   }
-  else if(isArm1Moving || isArm2Moving)
-  {
+  else if(isArm1Moving || isArm2Moving){
     return ARMS_SINGLE;
   }
-  
+  else{
+  }
   return ARMS_NONE;
 }
 
@@ -146,7 +146,7 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
   if(arms == ARMS_DOUBLE)
   {
     if(is_notify){
-      sprintf(data, "d,%d", param1.x * 100 / parameter_max);
+      sprintf(data, "d,%d", ((param1.x + param2.x) / 2) * 100 / parameter_max );
       Serial.println(data);
       decrementN(HP, 5);
       is_notify = false;
@@ -169,6 +169,7 @@ void notifyEffect(const struct vector3D& param1, const struct vector3D& param2, 
   else{
   }  
 }
+
 void decrementN(int& rv_value, int n)
 {
   for(int i = 0; i < n; i++)if(rv_value > 0)rv_value--;
@@ -187,17 +188,13 @@ unsigned long getDifference(unsigned long rv_a, unsigned long rv_b)
 
 void actuatorLoop()// LEDbarのみの記述
 {
-    //　ここから
     if(HP>0){
       LEDbarValue = HP;
     }else if(HP<=0){
       LEDbarValue = 0;
     }
     bar.setLevel(LEDbarValue);
-    // ここまで　をIOControllerにマージする。
-    
-    // if(is_notify)でシングルLED光らせる　else シングルLED消灯
-    // hogehoge
+
     if(is_notify){
       leds.setColorRGB(0, 0, 0, 250);
     }else{
